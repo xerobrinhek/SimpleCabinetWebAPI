@@ -10,7 +10,7 @@ public class UserPermissionDto {
 
     public UserPermissionDto(UserPermission obj) {
         this.id = obj.getId();
-        this.groupName = obj.getGroupName();
+        this.groupName = obj.getGroup().getId();
         this.name = obj.getName();
         this.value = obj.getValue();
     }

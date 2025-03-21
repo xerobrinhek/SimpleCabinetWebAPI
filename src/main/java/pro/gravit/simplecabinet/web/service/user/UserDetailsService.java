@@ -1,6 +1,5 @@
 package pro.gravit.simplecabinet.web.service.user;
 
-import jakarta.persistence.EntityManager;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.GrantedAuthority;
@@ -8,13 +7,12 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import pro.gravit.simplecabinet.web.model.user.User;
-import pro.gravit.simplecabinet.web.model.user.UserGroup;
-import pro.gravit.simplecabinet.web.model.user.UserPermission;
-import pro.gravit.simplecabinet.web.model.user.UserSession;
+import pro.gravit.simplecabinet.web.model.user.*;
 
-import java.util.*;
-import java.util.function.Function;
+import java.util.Collection;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -24,62 +22,35 @@ public class UserDetailsService {
     @Autowired
     private UserPermissionService permissionService;
     @Autowired
-    private EntityManager em;
+    private UserGroupService userGroupService;
 
     public CabinetUserDetails create(long userId, String username, List<String> roles, String client, long sessionId) {
         return new CabinetUserDetails(userId, null, username, roles, client, sessionId);
     }
 
     public CabinetUserDetails create(UserSession session) {
-        return new CabinetUserDetails(session.getUser().getId(), null, session.getUser().getUsername(), collectUserRoles(session.getUser()), session.getClient(), session.getId());
-    }
-
-    @Transactional
-    public List<String> collectUserRoles(User user) {
-        var groups = service.getUserGroups(user);
-        return groups.stream().sorted(Comparator.comparingLong(UserGroup::getPriority)).map(UserGroup::getGroupName).collect(Collectors.toList());
-    }
-
-    @Transactional
-    public Map<String, UserPermission> collectUserPermissionsEx(Collection<UserGroup> groups) {
-        List<String> groupNames = new ArrayList<>(groups.stream().map(UserGroup::getGroupName).toList());
-        groupNames.add("USER"); // Default group
-        var permissions = permissionService.findByGroupNames(groupNames);
-        Function<String, UserGroup> findGroup = name -> {
-            for (var e : groups) {
-                if (e.getGroupName().equals(name)) {
-                    return e;
-                }
-            }
-            return null;
-        };
-        permissions.sort(Comparator.comparingLong(x -> -findGroup.apply(x.getGroupName()).getPriority()));
-        Map<String, UserPermission> map = new HashMap<>();
-        for (var p : permissions) {
-            map.putIfAbsent(p.getName(), p);
-        }
-        return map;
-    }
-
-    @Transactional
-    public Map<String, String> collectUserPermissions(Collection<UserGroup> groups) {
-        Map<String, String> map = new HashMap<>();
-        for (var p : collectUserPermissionsEx(groups).values()) {
-            map.putIfAbsent(p.getName(), p.getValue());
-        }
-        return map;
+        var groups = userGroupService.findByUser(session.getUser());
+        return new CabinetUserDetails(session.getUser().getId(), null,
+                session.getUser().getUsername(),
+                groups.stream().map(UserGroup::getGroup).map(Group::getId).toList(),
+                session.getClient(), session.getId());
     }
 
     @Transactional
     public CabinetUserDetails makeDetails(User entity) {
+        var groups = userGroupService.findByUser(entity);
         return new pro.gravit.simplecabinet.web.service.user.UserDetailsService.CabinetUserDetails(
                 entity.getId(),
                 entity.getPassword(),
                 entity.getUsername(),
-                collectUserRoles(entity),
+                groups.stream().map(UserGroup::getGroup).map(Group::getId).toList(),
                 "UNKNOWN",
                 0
         );
+    }
+
+    public Map<String, String> getUserPermissions(User user) {
+        return permissionService.findByUser(user.getId()).stream().collect(Collectors.toMap(UserPermission::getName, UserPermission::getValue));
     }
 
     public class CabinetUserDetails implements UserDetails {
@@ -106,7 +77,7 @@ public class UserDetailsService {
         public Map<String, UserPermission> getPermissions() { // Optimize this
             if (permissions == null) {
                 var user = service.getReference(userId);
-                permissions = collectUserPermissionsEx(service.getUserGroups(user));
+                permissions = permissionService.findByUser(userId).stream().collect(Collectors.toMap(UserPermission::getName, e -> e));
             }
             return permissions;
         }

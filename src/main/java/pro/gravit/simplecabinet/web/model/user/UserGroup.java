@@ -15,9 +15,9 @@ public class UserGroup {
     @SequenceGenerator(name = "user_groups_generator", sequenceName = "user_groups_seq", allocationSize = 1)
     private long id;
     @Setter
-    private String groupName;
-    @Setter
-    private long priority;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "group_id")
+    private Group group;
     @Setter
     private LocalDateTime startDate;
     @Setter

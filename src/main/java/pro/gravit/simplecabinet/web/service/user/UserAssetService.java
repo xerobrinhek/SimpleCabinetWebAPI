@@ -76,9 +76,9 @@ public class UserAssetService {
     }
 
     public AssetLimits getAssetLimits(String type, UserService.CurrentUser user) {
-        var maxHeight = user.getPermissionValue(String.format("upload.%s.height", type));
-        var maxWidth = user.getPermissionValue(String.format("upload.%s.width", type));
-        var maxBytes = user.getPermissionValue(String.format("upload.%s.bytes", type));
+        var maxHeight = user.getPermission(String.format("upload.%s.height", type));
+        var maxWidth = user.getPermission(String.format("upload.%s.width", type));
+        var maxBytes = user.getPermission(String.format("upload.%s.bytes", type));
         return new AssetLimits(maxHeight == null ? DEFAULT_ASSET_LIMITS.maxHeight : Integer.parseInt(maxHeight),
                 maxWidth == null ? DEFAULT_ASSET_LIMITS.maxWidth : Integer.parseInt(maxWidth),
                 maxBytes == null ? DEFAULT_ASSET_LIMITS.maxBytes : Integer.parseInt(maxBytes));

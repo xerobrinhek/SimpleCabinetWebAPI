@@ -9,10 +9,7 @@ import pro.gravit.simplecabinet.web.exception.InvalidParametersException;
 import pro.gravit.simplecabinet.web.model.user.User;
 import pro.gravit.simplecabinet.web.model.user.UserGroup;
 import pro.gravit.simplecabinet.web.service.RegisterService;
-import pro.gravit.simplecabinet.web.service.user.PasswordCheckService;
-import pro.gravit.simplecabinet.web.service.user.SessionService;
-import pro.gravit.simplecabinet.web.service.user.UserGroupService;
-import pro.gravit.simplecabinet.web.service.user.UserService;
+import pro.gravit.simplecabinet.web.service.user.*;
 import pro.gravit.simplecabinet.web.utils.SecurityUtils;
 
 import java.time.LocalDateTime;
@@ -22,6 +19,8 @@ import java.util.ArrayList;
 public class SetupController {
     @Autowired
     public UserService userService;
+    @Autowired
+    public GroupService groupService;
     @Autowired
     public UserGroupService userGroupService;
     @Autowired
@@ -38,11 +37,12 @@ public class SetupController {
         if (userService.findById(1L).isPresent()) {
             throw new InvalidParametersException("Setup is completed", 19);
         }
+        var adminGroup = groupService.create("ADMIN", "Administrator", null);
         var password = SecurityUtils.generateRandomString(32);
         User user = registerService.createUser("admin", "admin@example.com", password);
         UserGroup admin = new UserGroup();
         admin.setUser(user);
-        admin.setGroupName("ADMIN");
+        admin.setGroup(adminGroup);
         admin.setStartDate(LocalDateTime.now());
         userGroupService.save(admin);
         user.setGroups(new ArrayList<>());

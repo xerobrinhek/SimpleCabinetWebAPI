@@ -135,13 +135,16 @@ public class UserService {
             return details.getSessionId();
         }
 
-        public String getPermissionValue(String key) {
+        public String getPermission(String key) {
             var map = details.getPermissions();
-            var value = map.get(key);
-            return value != null ? value.getValue() : null;
+            var permission = map.get(key);
+            if (permission == null) {
+                return null;
+            }
+            return permission.getValue();
         }
 
-        public UserPermission getPermission(String key) {
+        public UserPermission getUserPermission(String key) {
             var map = details.getPermissions();
             return map.get(key);
         }

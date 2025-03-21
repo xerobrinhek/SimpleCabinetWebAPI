@@ -7,13 +7,10 @@ import org.springframework.web.bind.annotation.*;
 import pro.gravit.simplecabinet.web.dto.PageDto;
 import pro.gravit.simplecabinet.web.dto.user.HardwareInfoDto;
 import pro.gravit.simplecabinet.web.dto.user.UserDto;
-import pro.gravit.simplecabinet.web.dto.user.UserGroupDto;
 import pro.gravit.simplecabinet.web.exception.EntityNotFoundException;
-import pro.gravit.simplecabinet.web.model.user.UserGroup;
 import pro.gravit.simplecabinet.web.service.DtoService;
 import pro.gravit.simplecabinet.web.service.user.*;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
@@ -84,50 +81,6 @@ public class UserController {
             throw new EntityNotFoundException("User not found");
         }
         service.delete(optional.get());
-    }
-
-    @PutMapping("/id/{userId}/group/{name}")
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    public UserGroupDto addGroup(@PathVariable long userId, @PathVariable String name, @RequestBody AddGroupRequest request) {
-        var optional = service.findById(userId);
-        if (optional.isEmpty()) {
-            throw new EntityNotFoundException("User not found");
-        }
-        UserGroup group = new UserGroup();
-        group.setGroupName(name);
-        group.setStartDate(LocalDateTime.now());
-        group.setEndDate(request.days <= 0 ? null : LocalDateTime.now().plusDays(request.days));
-        group.setUser(optional.get());
-        group.setPriority(request.priority);
-        groupService.save(group);
-        return new UserGroupDto(group);
-    }
-
-    @DeleteMapping("/id/{userId}/group/{name}")
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    public void deleteGroup(@PathVariable long userId, @PathVariable String name) {
-        var optional = service.findById(userId);
-        if (optional.isEmpty()) {
-            throw new EntityNotFoundException("User not found");
-        }
-        var group = groupService.findByGroupNameAndUser(name, optional.get());
-        if (group.isEmpty()) {
-            throw new EntityNotFoundException("Group not found");
-        }
-        groupService.delete(group.get());
-    }
-
-    @GetMapping("/id/{userId}/group/{name}")
-    public UserGroupDto getGroup(@PathVariable long userId, @PathVariable String name) {
-        var optional = service.findById(userId);
-        if (optional.isEmpty()) {
-            throw new EntityNotFoundException("User not found");
-        }
-        var group = groupService.findByGroupNameAndUser(name, optional.get());
-        if (group.isEmpty()) {
-            throw new EntityNotFoundException("Group not found");
-        }
-        return new UserGroupDto(group.get());
     }
 
     public record AddGroupRequest(long days, int priority) {

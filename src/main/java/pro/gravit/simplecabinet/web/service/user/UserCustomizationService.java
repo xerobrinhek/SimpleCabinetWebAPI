@@ -28,7 +28,7 @@ public class UserCustomizationService {
             if (product.getGroupName() != null) {
                 UserGroup userGroup = null;
                 for (var ug : user.getGroups()) {
-                    if (ug.getGroupName().equals(product.getGroupName())) {
+                    if (ug.getGroup().getId().equals(product.getGroupName())) {
                         userGroup = ug;
                         break;
                     }
@@ -54,7 +54,7 @@ public class UserCustomizationService {
     public void updatePrefixByGroup(User user, String prefix, String groupName) {
         UserGroup userGroup = null;
         for (var ug : user.getGroups()) {
-            if (ug.getGroupName().equals(groupName)) {
+            if (ug.getGroup().getId().equals(groupName)) {
                 userGroup = ug;
                 break;
             }

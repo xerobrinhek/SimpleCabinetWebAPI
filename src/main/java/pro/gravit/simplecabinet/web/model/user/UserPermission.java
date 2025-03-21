@@ -13,20 +13,12 @@ public class UserPermission {
     @SequenceGenerator(name = "user_permissions_generator", sequenceName = "user_permissions_seq", allocationSize = 1)
     private long id;
     @Setter
-    @Column(name = "group_name")
-    private String groupName;
+    @ManyToOne
+    @JoinColumn(name = "group_id")
+    private Group group;
     @Setter
     private String name;
     @Setter
     private String value;
-
-    public UserPermission() {
-    }
-
-    public UserPermission(String groupName, String name, String value) {
-        this.groupName = groupName;
-        this.name = name;
-        this.value = value;
-    }
 
 }

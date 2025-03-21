@@ -42,7 +42,7 @@ public class CabinetPrefixController {
     @PutMapping
     public void setPrefix(@RequestBody SetPrefixRequest request) {
         var user = userService.getCurrentUser();
-        var alwaysPermission = user.getPermission(ALWAYS_PERMISSION_NAME);
+        var alwaysPermission = user.getUserPermission(ALWAYS_PERMISSION_NAME);
         if (alwaysPermission == null) {
             var order = serviceProductService.findByUserAndType(user.getReference(), ServiceProduct.ServiceType.CHANGE_PREFIX);
             if (order.isEmpty()) {
@@ -50,7 +50,7 @@ public class CabinetPrefixController {
             }
             userCustomizationService.updatePrefixByOrder(user.getReference(), request.prefix, order.get());
         } else {
-            userCustomizationService.updatePrefixByGroup(user.getReference(), request.prefix, alwaysPermission.getGroupName());
+            userCustomizationService.updatePrefixByGroup(user.getReference(), request.prefix, alwaysPermission.getGroup().getId());
         }
     }
 

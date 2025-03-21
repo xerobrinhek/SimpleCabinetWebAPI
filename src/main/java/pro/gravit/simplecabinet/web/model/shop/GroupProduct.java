@@ -1,10 +1,9 @@
 package pro.gravit.simplecabinet.web.model.shop;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import pro.gravit.simplecabinet.web.model.user.Group;
 
 @Setter
 @Getter
@@ -17,7 +16,9 @@ public class GroupProduct extends Product {
     private String context;
     @Column(name = "expire_days")
     private long expireDays;
-    private String localName;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "local_name")
+    private Group group;
     private boolean local;
     private boolean stackable;
 

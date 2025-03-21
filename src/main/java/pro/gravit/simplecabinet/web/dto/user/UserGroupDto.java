@@ -8,6 +8,6 @@ public class UserGroupDto {
 
     public UserGroupDto(UserGroup entity) {
         this.id = entity.getId();
-        this.groupName = entity.getGroupName();
+        this.groupName = entity.getGroup().getId();
     }
 }

@@ -62,7 +62,7 @@ public class GroupProductService {
     public GroupOrder delivery(GroupOrder initialOrder) {
         var product = initialOrder.getProduct();
         var user = initialOrder.getUser();
-        UserGroup group = userGroupService.findByGroupNameAndUser(product.getLocalName(), user).orElse(null);
+        UserGroup group = userGroupService.findByGroupAndUser(product.getGroup(), user).orElse(null);
         if (group == null) {
             group = makeUserGroup(initialOrder);
         } else if (product.isStackable()) {
@@ -82,7 +82,7 @@ public class GroupProductService {
     private UserGroup makeUserGroup(GroupOrder order) {
         var product = order.getProduct();
         UserGroup userGroup = new UserGroup();
-        userGroup.setGroupName(product.getLocalName());
+        userGroup.setGroup(product.getGroup());
         userGroup.setUser(order.getUser());
         userGroup.setStartDate(LocalDateTime.now());
         if(product.getExpireDays() > 0) {

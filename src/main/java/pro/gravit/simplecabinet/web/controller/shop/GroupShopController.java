@@ -13,6 +13,7 @@ import pro.gravit.simplecabinet.web.model.shop.GroupProduct;
 import pro.gravit.simplecabinet.web.service.DtoService;
 import pro.gravit.simplecabinet.web.service.shop.group.GroupProductService;
 import pro.gravit.simplecabinet.web.service.shop.group.GroupSearchService;
+import pro.gravit.simplecabinet.web.service.user.GroupService;
 import pro.gravit.simplecabinet.web.service.user.UserService;
 
 import java.time.LocalDateTime;
@@ -28,6 +29,8 @@ public class GroupShopController {
     private DtoService dtoService;
     @Autowired
     private GroupSearchService searchsr;
+    @Autowired
+    private GroupService groupService;
 
     @GetMapping("/page/{pageId}")
     public PageDto<GroupProductDto> getPage(@PathVariable int pageId) {
@@ -94,7 +97,7 @@ public class GroupShopController {
         product.setPrice(request.price);
         product.setCurrency(request.currency);
         product.setStackable(request.stackable);
-        product.setLocalName(request.localName);
+        product.setGroup(groupService.getReferenceById(request.localName()));
         product.setPictureUrl(request.pictureName);
         product.setAvailable(true);
         groupProductService.save(product);

@@ -9,6 +9,7 @@ import pro.gravit.simplecabinet.web.model.user.User;
 import pro.gravit.simplecabinet.web.model.user.UserSession;
 import pro.gravit.simplecabinet.web.service.KeyManagementService;
 import pro.gravit.simplecabinet.web.service.user.UserDetailsService;
+import pro.gravit.simplecabinet.web.service.user.UserGroupService;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -24,6 +25,8 @@ public class JwtProvider {
     private KeyManagementService keyManagementService;
     @Autowired
     private UserDetailsService userDetailsService;
+    @Autowired
+    private UserGroupService userGroupService;
 
     public GeneratedJWTToken generateToken(UserSession session) {
         LocalDateTime dateTime = LocalDateTime.now().plusDays(15);
@@ -42,11 +45,11 @@ public class JwtProvider {
 
     private JwtBuilder makeBasic(UserSession session) {
         User user = session.getUser();
-        var roles = userDetailsService.collectUserRoles(user);
+        var roles = userGroupService.findByUser(user);
         return Jwts.builder()
                 .subject(user.getUsername())
                 .issuer("SimpleCabinet")
-                .claim("roles", roles)
+                .claim("roles", roles.stream().map(e -> e.getGroup().getId()).toList())
                 .claim("id", user.getId())
                 .claim("sessionId", session.getId())
                 .claim("client", session.getClient())

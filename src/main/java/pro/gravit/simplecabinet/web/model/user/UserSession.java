@@ -23,6 +23,7 @@ public class UserSession {
     @Column(name = "refresh_token")
     private String refreshToken;
     @Setter
+    @Column(columnDefinition = "inet")
     private Inet ip;
     @Setter
     private String client;

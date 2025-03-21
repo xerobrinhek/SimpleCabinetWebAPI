@@ -1,0 +1,120 @@
+package pro.gravit.simplecabinet.web.controller;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+import pro.gravit.simplecabinet.web.dto.GroupDto;
+import pro.gravit.simplecabinet.web.dto.PageDto;
+import pro.gravit.simplecabinet.web.dto.user.UserPermissionDto;
+import pro.gravit.simplecabinet.web.exception.EntityNotFoundException;
+import pro.gravit.simplecabinet.web.exception.InvalidParametersException;
+import pro.gravit.simplecabinet.web.service.user.GroupService;
+import pro.gravit.simplecabinet.web.service.user.UserGroupService;
+import pro.gravit.simplecabinet.web.service.user.UserPermissionService;
+import pro.gravit.simplecabinet.web.service.user.UserService;
+
+import java.time.LocalDateTime;
+
+@RestController
+@RequestMapping("/group")
+public class GroupController {
+    @Autowired
+    private GroupService groupService;
+    @Autowired
+    private UserGroupService userGroupService;
+    @Autowired
+    private UserService userService;
+    @Autowired
+    private UserPermissionService userPermissionService;
+
+    @GetMapping("/id/{id}")
+    public GroupDto findById(@PathVariable String id) {
+        var optional = groupService.findById(id);
+        if (optional.isEmpty()) {
+            throw new EntityNotFoundException("Group not found");
+        }
+        return optional.map(GroupDto::new).get();
+    }
+
+    @GetMapping("/id/{id}/permissions/page/{pageId}")
+    public PageDto<UserPermissionDto> findPermissionsByGroupId(@PathVariable String id, @PathVariable int pageId) {
+        var optional = groupService.findById(id);
+        if (optional.isEmpty()) {
+            throw new EntityNotFoundException("Group not found");
+        }
+        var list = userPermissionService.findByGroup(optional.get(), PageRequest.of(pageId, 10));
+        return new PageDto<>(list.map(UserPermissionDto::new));
+    }
+
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PostMapping("/id/{id}/permissions/new")
+    public UserPermissionDto createPermission(@PathVariable String id, @RequestBody CreatePermissionRequest request) {
+        var optional = groupService.findById(id);
+        if (optional.isEmpty()) {
+            throw new EntityNotFoundException("Group not found");
+        }
+        var permission = userPermissionService.create(optional.get(), request.name(), request.value());
+        return new UserPermissionDto(permission);
+    }
+
+    @GetMapping("/page/{pageId}")
+    public PageDto<GroupDto> findAll(@PathVariable int pageId) {
+        var list = groupService.findAll(PageRequest.of(pageId, 10));
+        return new PageDto<>(list.map(GroupDto::new));
+    }
+
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PostMapping("/new")
+    public GroupDto newGroup(@RequestBody CreateGroupRequest request) {
+        var group = groupService.create(request.id(), request.displayName(), request.parentId());
+        return new GroupDto(group);
+    }
+
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PostMapping("/id/{id}/assign")
+    public void assign(@PathVariable String id, @RequestBody AssignRequest request) {
+        var group = groupService.findById(id);
+        if (group.isEmpty()) {
+            throw new EntityNotFoundException("Group not found");
+        }
+        var user = userService.findById(request.userId());
+        if (user.isEmpty()) {
+            throw new EntityNotFoundException("User not found");
+        }
+        userGroupService.create(user.get(), group.get(), request.endDate());
+    }
+
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PostMapping("/id/{id}/unassign")
+    public void unassign(@PathVariable String id, @RequestBody UnassignRequest request) {
+        var group = groupService.findById(id);
+        if (group.isEmpty()) {
+            throw new EntityNotFoundException("Group not found");
+        }
+        var user = userService.findById(request.userId());
+        if (user.isEmpty()) {
+            throw new EntityNotFoundException("User not found");
+        }
+        var userGroup = userGroupService.findByGroupAndUser(group.get(), user.get());
+        if (userGroup.isEmpty()) {
+            throw new InvalidParametersException("UserGroup not found", 40);
+        }
+    }
+
+    public record CreateGroupRequest(String id, String displayName, String parentId) {
+
+    }
+
+    public record AssignRequest(Long userId, LocalDateTime endDate) {
+
+    }
+
+    public record UnassignRequest(Long userId) {
+
+    }
+
+    public record CreatePermissionRequest(String name, String value) {
+
+    }
+}

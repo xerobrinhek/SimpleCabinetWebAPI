@@ -7,7 +7,6 @@ import org.springframework.web.bind.annotation.*;
 import pro.gravit.simplecabinet.web.dto.user.UserReputationChangeDto;
 import pro.gravit.simplecabinet.web.exception.EntityNotFoundException;
 import pro.gravit.simplecabinet.web.exception.InvalidParametersException;
-import pro.gravit.simplecabinet.web.model.user.UserPermission;
 import pro.gravit.simplecabinet.web.model.user.UserReputationChange;
 import pro.gravit.simplecabinet.web.service.ReputationService;
 import pro.gravit.simplecabinet.web.service.user.UserDetailsService;
@@ -56,9 +55,9 @@ public class ReputationController {
         if (target.isEmpty()) {
             throw new EntityNotFoundException("Target user not found");
         }
-        var permissions = userDetailsService.collectUserPermissionsEx(user.get().getGroups());
-        var value = Long.parseLong(Optional.ofNullable(permissions.get("reputation.value." + (request.isPlus() ? "add" : "remove"))).map(UserPermission::getValue).orElse("1"));
-        var delay = Long.parseLong(Optional.ofNullable(permissions.get("reputation.delay." + (request.isPlus() ? "add" : "remove"))).map(UserPermission::getValue).orElse("300"));
+        var permissions = userDetailsService.getUserPermissions(user.get());
+        var value = Long.parseLong(Optional.ofNullable(permissions.get("reputation.value." + (request.isPlus() ? "add" : "remove"))).orElse("1"));
+        var delay = Long.parseLong(Optional.ofNullable(permissions.get("reputation.delay." + (request.isPlus() ? "add" : "remove"))).orElse("300"));
         if (request.checkLimits() && !reputationService.checkDuration(user.get().getId(), userId, delay)) {
             throw new InvalidParametersException("Too frequently", 74);
         }

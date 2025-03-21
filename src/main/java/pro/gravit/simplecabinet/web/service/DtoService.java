@@ -75,7 +75,7 @@ public class DtoService {
         var groups = userService.getUserGroups(user);
         var groupsDto = groups.stream().map(UserGroupDto::new).collect(Collectors.toList());
         return new UserDto(user.getId(), user.getUsername(), user.getUuid(), user.getGender(), user.getReputation(), user.getStatus(), user.getRegistrationDate(),
-                groupsDto, getUserTextures(user), userDetailsService.collectUserPermissions(groups));
+                groupsDto, getUserTextures(user), userDetailsService.getUserPermissions(user));
     }
 
     public UserDto toMiniUserDto(User user) {
