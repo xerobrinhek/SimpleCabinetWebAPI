@@ -6,6 +6,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pro.gravit.simplecabinet.web.exception.BalanceException;
+import pro.gravit.simplecabinet.web.exception.InvalidParametersException;
 import pro.gravit.simplecabinet.web.model.shop.GroupOrder;
 import pro.gravit.simplecabinet.web.model.shop.GroupProduct;
 import pro.gravit.simplecabinet.web.model.user.User;
@@ -50,6 +51,20 @@ public class GroupProductService {
 
     @Transactional
     public GroupOrder createGroupOrder(GroupProduct product, long quantity, User user) throws BalanceException {
+        LocalDateTime now = LocalDateTime.now();
+        if (product.getEndDate() != null && product.getEndDate().isBefore(now)) {
+            throw new InvalidParametersException("Product expired", 3);
+        }
+        if (product.getCount() > 0) {
+            if (product.getCount() < quantity) {
+                throw new InvalidParametersException("Not enough product available", 4);
+            }
+            product.setCount(product.getCount() - quantity);
+            if (product.getCount() == 0) {
+                product.setAvailable(false);
+            }
+            save(product);
+        }
         GroupOrder groupOrder = new GroupOrder();
         shopService.fillBasicOrderProperties(groupOrder, quantity, user);
         groupOrder.setProduct(product);
