@@ -16,6 +16,6 @@ public class GroupDto {
     public GroupDto(Group group) {
         this.id = group.getId();
         this.displayName = group.getDisplayName();
-        this.parentId = group.getParent().getId();
+        this.parentId = group.getParent() != null ? group.getParent().getId() : null;
     }
 }
