@@ -3,6 +3,7 @@ package pro.gravit.simplecabinet.web.controller;
 import jakarta.servlet.ServletException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.TypeMismatchException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -40,6 +41,12 @@ public class CustomRestExceptionHandler {
 
     @ExceptionHandler(ServletException.class)
     public ResponseEntity<ApiError> handleServletException(ServletException e) {
+        ApiError error = new ApiError(499, e.getMessage());
+        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(TypeMismatchException.class)
+    public ResponseEntity<ApiError> handleTypeMismatchException(TypeMismatchException e) {
         ApiError error = new ApiError(499, e.getMessage());
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }

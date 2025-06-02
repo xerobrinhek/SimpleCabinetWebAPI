@@ -9,6 +9,7 @@ import pro.gravit.simplecabinet.web.dto.PageDto;
 import pro.gravit.simplecabinet.web.dto.user.UserPermissionDto;
 import pro.gravit.simplecabinet.web.exception.EntityNotFoundException;
 import pro.gravit.simplecabinet.web.exception.InvalidParametersException;
+import pro.gravit.simplecabinet.web.model.user.Group;
 import pro.gravit.simplecabinet.web.service.user.GroupService;
 import pro.gravit.simplecabinet.web.service.user.UserGroupService;
 import pro.gravit.simplecabinet.web.service.user.UserPermissionService;
@@ -39,23 +40,37 @@ public class GroupController {
 
     @GetMapping("/id/{id}/permissions/page/{pageId}")
     public PageDto<UserPermissionDto> findPermissionsByGroupId(@PathVariable String id, @PathVariable int pageId) {
-        var optional = groupService.findById(id);
-        if (optional.isEmpty()) {
-            throw new EntityNotFoundException("Group not found");
-        }
-        var list = userPermissionService.findByGroup(optional.get(), PageRequest.of(pageId, 10));
+        var group = findGroupById(id);
+        var list = userPermissionService.findByGroup(group, PageRequest.of(pageId, 10));
         return new PageDto<>(list.map(UserPermissionDto::new));
     }
 
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PostMapping("/id/{id}/permissions/new")
     public UserPermissionDto createPermission(@PathVariable String id, @RequestBody CreatePermissionRequest request) {
-        var optional = groupService.findById(id);
-        if (optional.isEmpty()) {
-            throw new EntityNotFoundException("Group not found");
-        }
-        var permission = userPermissionService.create(optional.get(), request.name(), request.value());
+        var group = findGroupById(id);
+        var permission = userPermissionService.create(group, request.name(), request.value());
         return new UserPermissionDto(permission);
+    }
+
+    private Group findGroupById(@PathVariable String id) {
+        Group group;
+        if (id.equals("default")) {
+            group = null;
+        } else {
+            var optional = groupService.findById(id);
+            if (optional.isEmpty()) {
+                throw new EntityNotFoundException("Group not found");
+            }
+            group = optional.get();
+        }
+        return group;
+    }
+
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @DeleteMapping("/permissions/id/{permissionId}")
+    public void deletePermission(@PathVariable Long permissionId) {
+        userPermissionService.delete(permissionId);
     }
 
     @GetMapping("/page/{pageId}")

@@ -25,6 +25,10 @@ public class UserPermissionService {
         return repository.save(permission);
     }
 
+    public void delete(Long id) {
+        repository.deleteById(id);
+    }
+
     public List<UserPermission> findByGroup(Group group) {
         return repository.findByGroup(group);
     }
