@@ -27,8 +27,8 @@ public class WebApplicationOnStartup {
             }
             unpack(Path.of("templates", "email-passwordreset.html"), "templates/email-passwordreset.html");
             unpack(Path.of("templates", "email-regconfirm.html"), "templates/email-regconfirm.html");
-            System.out.println("File 'application.properties' created. Stop...");
-            System.exit(0);
+            //System.out.println("File 'application.properties' created. Stop...");
+            //System.exit(0);
         }
     }
 
