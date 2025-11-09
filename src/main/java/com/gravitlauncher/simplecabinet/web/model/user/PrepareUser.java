@@ -14,7 +14,7 @@ public class PrepareUser {
     @Column(unique = true)
     public String username;
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "users_generator")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "prepare_users_generator")
     @SequenceGenerator(name = "prepare_users_generator", sequenceName = "prepare_users_seq", allocationSize = 1)
     private long id;
     @Setter
