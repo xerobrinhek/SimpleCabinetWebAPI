@@ -40,7 +40,7 @@ public class MailSTMPService implements MailService {
     @Override
     public void sendTemplateEmail(String toAddress, String templateName, String... params) {
         try {
-            String template = Files.readString(Path.of(config.getTemplatesDirectory(), "email-passwordreset.html"));
+            String template = Files.readString(Path.of(config.getTemplatesDirectory(), templateName));
             for (int i = 0; i < params.length; i += 2) {
                 template = template.replace(params[i], params[i + 1]);
             }
