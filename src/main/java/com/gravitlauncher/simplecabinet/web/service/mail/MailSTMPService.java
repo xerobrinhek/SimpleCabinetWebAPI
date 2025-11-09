@@ -28,7 +28,7 @@ public class MailSTMPService implements MailService {
     public void sendSimpleEmail(String toAddress, String text) {
         try {
             SimpleMailMessage message = new SimpleMailMessage();
-            message.setTo(text);
+            message.setTo(toAddress);
             message.setSubject(config.getSubject());
             message.setText(text);
             emailSender.send(message);
