@@ -11,7 +11,7 @@ permissions:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }} # results in "<owner>/<repo>"
+  IMAGE_NAME: xerobrinhek/simplecabinetwebapi # results in "<owner>/<repo>"
 
 jobs:
   test-build-publish:
