@@ -17,4 +17,14 @@ public class WebApplication {
         SpringApplication.run(WebApplication.class, args);
     }
 
+    @Component 
+    public class TokenCleanupTask {
+        @Autowired     
+        private PasswordResetService passpasswordResetService;
+        
+        @Scheduled(fixedRate = 30 * 60 * 1000) // каждые 30 минут
+        public void cleanup() {
+            passwordResetService.cleacleanupExpiredTokens();  
+        }
+    }
 }
