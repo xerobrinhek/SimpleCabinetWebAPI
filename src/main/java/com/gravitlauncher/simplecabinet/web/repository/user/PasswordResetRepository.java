@@ -11,10 +11,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface PasswordResetRepository extends JpaRepository<PasswordReset, Long> {
-    // Найти по UUID (основной метод для сброса)
     Optional<PasswordReset> findByUuid(UUID uuid);
 
-    // Удалить все токены пользователя (например, после смены пароля)
     @Modifying
     @Transactional
     @Query("DELETE FROM PasswordReset pr WHERE pr.user.id = :userId")
