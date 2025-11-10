@@ -1,9 +1,11 @@
+// src/main/java/com/gravitlauncher/simplecabinet/web/model/user/PasswordReset.java
 package com.gravitlauncher.simplecabinet.web.model.user;
 
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Getter
@@ -24,5 +26,8 @@ public class PasswordReset {
     @Column(unique = true)
     private UUID uuid;
 
-
+    // НОВОЕ ПОЛЕ: время создания
+    @Setter
+    @Column(name = "created_at")
+    private LocalDateTime createdAt = LocalDateTime.now();
 }
