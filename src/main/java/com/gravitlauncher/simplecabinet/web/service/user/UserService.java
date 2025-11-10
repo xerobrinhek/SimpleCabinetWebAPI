@@ -26,6 +26,21 @@ public class UserService {
     @Autowired
     private UserSessionRepository userSessionRepository;
 
+    @Autowired
+    private PasswordResetRepository passwordResetRepository;
+
+    public void savePasswordReset(PasswordReset reset) {
+        passwordResetRepository.save(reset);
+    }
+
+    public Optional<PasswordReset> findPasswordResetByUuid(UUID uuid) {
+        return passwordResetRepository.findByUuid(uuid);
+    }    
+    
+    public void deletePasswordReset(PasswordReset reset) {
+        passwordResetRepository.delete(reset);
+    }
+
     public <S extends User> S save(S entity) {
         return repository.save(entity);
     }
