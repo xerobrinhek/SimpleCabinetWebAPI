@@ -25,7 +25,7 @@ public class AuthResetPasswordController {
     @Autowired
     private MailService mailService;
 
-    @Value("${reset.password.url:https://ваш-сайт/resetpass/%s}")
+    @Value("${reset.password.url:https://optically-serene-primate.cloudpub.ru/resetpass/%s}")
     private String resetPasswordUrlTemplate;
 
     // 1. Запрос на сброс: логин + email
