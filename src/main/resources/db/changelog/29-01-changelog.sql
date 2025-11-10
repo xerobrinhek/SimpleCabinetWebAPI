@@ -274,7 +274,8 @@ CREATE TABLE password_resets
     id      BIGINT DEFAULT nextval('password_resets_seq') NOT NULL,
     uuid    CHAR(36),
     user_id BIGINT,
-    CONSTRAINT password_resets_pkey PRIMARY KEY (id)
+    CONSTRAINT password_resets_pkey PRIMARY KEY (id),
+    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW();
 );
 
 -- changeset gravita:1756441183091-38
