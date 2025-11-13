@@ -1,27 +1,33 @@
-// src/main/java/com/gravitlauncher/simplecabinet/web/service/PasswordResetService.java
 package com.gravitlauncher.simplecabinet.web.service;
 
-import com.gravitlauncher.simplecabinet.web.exception.EntityNotFoundException;
+import com.gravitlauncher.simplecabinet.web.configuration.properties.PasswordResetConfig;
+import com.gravitlauncher.simplecabinet.web.configuration.properties.RegistrationConfig;
 import com.gravitlauncher.simplecabinet.web.exception.InvalidParametersException;
 import com.gravitlauncher.simplecabinet.web.model.user.PasswordReset;
-import com.gravitlauncher.simplecabinet.web.model.user.User;
 import com.gravitlauncher.simplecabinet.web.repository.user.PasswordResetRepository;
 import com.gravitlauncher.simplecabinet.web.service.mail.MailService;
 import com.gravitlauncher.simplecabinet.web.service.user.PasswordCheckService;
 import com.gravitlauncher.simplecabinet.web.service.user.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Service
+@ConditionalOnProperty(
+        value = "resetpass.enabled")
 public class PasswordResetService {
 
-    @Value("${reset.password.url:https://optically-serene-primate.cloudpub.ru/resetpass/%s}")
-    private String resetPasswordUrlTemplate;
+    @Autowired
+    private RegistrationConfig configPass;
+
+    @Autowired
+    private PasswordResetConfig config;
 
     @Autowired
     private UserService userService;
@@ -38,11 +44,10 @@ public class PasswordResetService {
     private static final long TOKEN_EXPIRY_HOURS = 1;
 
     @Transactional
-    public void requestPasswordReset(String username, String email) {
+    public ResetRequestResult requestPasswordReset(String username, String email) {
         var userOpt = userService.findByUsername(username);
         if (userOpt.isEmpty() || !userOpt.get().getEmail().equalsIgnoreCase(email)) {
-            // Всегда возвращаем "успех", чтобы не раскрывать валидность данных
-            return;
+            return new ResetRequestResult(false, false);
         }
 
         // Удаляем старые токены (в т.ч. просроченные)
@@ -56,40 +61,48 @@ public class PasswordResetService {
         passwordResetRepository.save(reset);
 
         // Отправляем письмо
-        String resetUrl = String.format(resetPasswordUrlTemplate, reset.getUuid());
+        String resetUrl = String.format(config.getUrl(), reset.getUuid());
         mailService.sendTemplateEmail(
-            userOpt.get().getEmail(),
-            "email-passwordreset.html",
-            "%username%", userOpt.get().getUsername(),
-            "%url%", resetUrl
+                userOpt.get().getEmail(),
+                "email-passwordreset.html",
+                "%username%", URLEncoder.encode(userOpt.get().getUsername(), StandardCharsets.UTF_8),
+                "%url%", resetUrl
         );
+        return new ResetRequestResult(true, true);
     }
 
     @Transactional
-    public void completePasswordReset(String tokenStr, String newPassword) {
+    public ResetConfirmResult completePasswordReset(String tokenStr, String newPassword) {
         UUID token;
         try {
             token = UUID.fromString(tokenStr);
         } catch (Exception e) {
-            throw new InvalidParametersException("Invalid token format", 400);
+            throw new InvalidParametersException("Неправильный формат токена", 400);
         }
 
         LocalDateTime oneHourAgo = LocalDateTime.now().minusHours(TOKEN_EXPIRY_HOURS);
         var resetOpt = passwordResetRepository.findByUuidAndNotExpired(token, oneHourAgo);
 
         if (resetOpt.isEmpty()) {
-            throw new InvalidParametersException("Invalid or expired token", 401);
+            throw new InvalidParametersException("Неправильный или просроченный токен", 401);
         }
 
         var reset = resetOpt.get();
         var user = reset.getUser();
 
         // Меняем пароль
-        passwordCheckService.setPassword(user, newPassword);
-        userService.save(user);
-
-        // Удаляем токен (одноразовый)
-        passwordResetRepository.delete(reset);
+        if (newPassword.isEmpty()) {
+            throw new InvalidParametersException("Пустой пароль", 36);
+        }
+        if (newPassword.length() < configPass.getMinPasswordLength() || newPassword.length() > configPass.getMaxPasswordLength()) {
+            throw new InvalidParametersException(String.format("Длина пароля должна быть от %d до %d символов",
+                    configPass.getMinPasswordLength(), configPass.getMaxPasswordLength()), 36);
+        } else {
+            passwordCheckService.setPassword(user, newPassword);
+            userService.save(user);
+            passwordResetRepository.delete(reset);
+            return new ResetConfirmResult(true, true);
+        }
     }
 
     // Опционально: метод для фоновой очистки (можно вызывать по расписанию)
@@ -98,4 +111,6 @@ public class PasswordResetService {
         LocalDateTime oneHourAgo = LocalDateTime.now().minusHours(TOKEN_EXPIRY_HOURS);
         passwordResetRepository.deleteExpired(oneHourAgo);
     }
-  }
+    public record ResetRequestResult(boolean done, boolean correct) {}
+    public record ResetConfirmResult(boolean done, boolean correct) {}
+}

@@ -19,4 +19,8 @@ public interface PasswordResetRepository extends JpaRepository<PasswordReset, Lo
     @Modifying
     @Query("DELETE FROM PasswordReset p WHERE p.createdAt < :oneHourAgo")
     void deleteExpired(LocalDateTime oneHourAgo);
+
+    @Modifying
+    @Query("DELETE FROM PasswordReset pr WHERE pr.user.id = :userId")
+    void deleteByUserId(Long userId);
 }

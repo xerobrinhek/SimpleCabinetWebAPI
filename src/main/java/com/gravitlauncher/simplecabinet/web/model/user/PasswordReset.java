@@ -26,7 +26,6 @@ public class PasswordReset {
     @Column(unique = true)
     private UUID uuid;
 
-    // НОВОЕ ПОЛЕ: время создания
     @Setter
     @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
