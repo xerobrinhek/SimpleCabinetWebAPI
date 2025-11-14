@@ -275,7 +275,7 @@ CREATE TABLE password_resets
     uuid    CHAR(36),
     user_id BIGINT,
     CONSTRAINT password_resets_pkey PRIMARY KEY (id),
-    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW();
+    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW()
 );
 
 -- changeset gravita:1756441183091-38
@@ -640,6 +640,6 @@ ALTER TABLE public.users
 -- changeset gravita:1756441183091-98
 CREATE SEQUENCE IF NOT EXISTS prepare_users_seq START WITH 1 INCREMENT BY 1;
 
--- changeset xerobrinhek:1756441183091-1
+-- changeset gravita:1756441183091-99
 ALTER TABLE password_resets
-ALTER COLUMN uuid TYPE UUID USING uuid::UUID;
+    ALTER COLUMN uuid TYPE UUID USING uuid::UUID;

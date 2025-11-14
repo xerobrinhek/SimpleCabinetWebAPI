@@ -22,15 +22,17 @@ public class TestPaymentService implements BasicPaymentService {
     private TestPaymentConfig config;
 
     @Override
-    public PaymentService.PaymentCreationInfo createBalancePayment(User user, double sum, String ip) throws Exception {
+    public PaymentService.PaymentCreationInfo createBalancePayment(User user, double sum, String ip) {
         if (!config.isEnable()) {
             throw new PaymentException("This payment method is disabled", 6);
         }
         var payment = paymentService.createBasic(user, sum);
         payment.setSystem("Test");
-        payment.setSystemPaymentId(String.valueOf(payment.getId()));
         paymentService.save(payment);
-        return new PaymentService.PaymentCreationInfo(new PaymentService.PaymentRedirectInfo(String.format("%s?id=%s&current=%f", config.getUrl(), payment.getSystemPaymentId(), payment.getSum())), payment);
+
+        // Возвращаем URL, куда пользователь будет направлен для "оплаты"
+        String redirectUrl = String.format("%s?id=%s&sum=%s", config.getUrl(), payment.getId(), payment.getSum());
+        return new PaymentService.PaymentCreationInfo(new PaymentService.PaymentRedirectInfo(redirectUrl), payment);
     }
 
     @Override
@@ -39,7 +41,19 @@ public class TestPaymentService implements BasicPaymentService {
     }
 
     public void complete(WebhookResponse webhookResponse) {
-        var payment = paymentService.findUserPaymentBySystemId("Test", webhookResponse.id()).orElseThrow();
+        // Логируем пришедший ID для отладки
+        System.out.println("Получен вебхук с ID: " + webhookResponse.id());
+
+        // Ищем платеж
+        var paymentOpt = paymentService.findUserPaymentById(Long.parseLong(webhookResponse.id()));
+
+        if (paymentOpt.isEmpty()) {
+            // Лучше выбросить специфическое исключение
+            throw new PaymentException("Payment not found for systemPaymentId: " + webhookResponse.id(), 1001);
+        }
+
+        var payment = paymentOpt.get();
+
         var oldStatus = payment.getStatus();
         if (webhookResponse.status().equalsIgnoreCase("SUCCESS")) {
             completePayment(payment, Payment.PaymentStatus.SUCCESS);
@@ -56,7 +70,7 @@ public class TestPaymentService implements BasicPaymentService {
         paymentService.save(payment);
     }
 
-    public record WebhookResponse(String id, String current, String status, boolean sending_status) {
+    public record WebhookResponse(String id, String status) {
 
     }
 }

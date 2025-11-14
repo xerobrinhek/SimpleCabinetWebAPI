@@ -15,17 +15,17 @@ public class ResetPasswordController {
     public ResetResponse requestResetTest(@RequestBody ResetRequest request) {
         passwordResetService.cleanupExpiredTokens();
         var result = passwordResetService.requestPasswordReset(request.username(), request.email());
-        return new ResetResponse(result.done(), result.correct());
+        return new ResetResponse(result.done(), result.desc());
     }
     @PostMapping("/resetpass/{token}")
     public ResetConfirmResponse resetPasswordTest(@PathVariable String token, @RequestBody ResetPasswordRequest request) {
         var result = passwordResetService.completePasswordReset(token, request.newPassword());
         passwordResetService.cleanupExpiredTokens();
-        return new ResetConfirmResponse(result.done(), result.correct());
+        return new ResetConfirmResponse(result.done(), result.desc());
     }
 
-    public record ResetConfirmResponse(boolean done, boolean correct) {}
-    public record ResetResponse(boolean done, boolean correct) {}
+    public record ResetConfirmResponse(boolean done, String desc) {}
+    public record ResetResponse(boolean done, String desc) {}
     public record ResetRequest(String username, String email) {}
     public record ResetPasswordRequest(String newPassword) {}
 }

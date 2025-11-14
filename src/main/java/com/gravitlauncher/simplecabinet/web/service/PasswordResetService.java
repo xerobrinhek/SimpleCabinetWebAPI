@@ -2,7 +2,6 @@ package com.gravitlauncher.simplecabinet.web.service;
 
 import com.gravitlauncher.simplecabinet.web.configuration.properties.PasswordResetConfig;
 import com.gravitlauncher.simplecabinet.web.configuration.properties.RegistrationConfig;
-import com.gravitlauncher.simplecabinet.web.exception.InvalidParametersException;
 import com.gravitlauncher.simplecabinet.web.model.user.PasswordReset;
 import com.gravitlauncher.simplecabinet.web.repository.user.PasswordResetRepository;
 import com.gravitlauncher.simplecabinet.web.service.mail.MailService;
@@ -47,7 +46,7 @@ public class PasswordResetService {
     public ResetRequestResult requestPasswordReset(String username, String email) {
         var userOpt = userService.findByUsername(username);
         if (userOpt.isEmpty() || !userOpt.get().getEmail().equalsIgnoreCase(email)) {
-            return new ResetRequestResult(false, false);
+            return new ResetRequestResult(false, "Указан неправильный email или ник!");
         }
 
         // Удаляем старые токены (в т.ч. просроченные)
@@ -63,12 +62,12 @@ public class PasswordResetService {
         // Отправляем письмо
         String resetUrl = String.format(config.getUrl(), reset.getUuid());
         mailService.sendTemplateEmail(
-                userOpt.get().getEmail(),
-                "email-passwordreset.html",
-                "%username%", URLEncoder.encode(userOpt.get().getUsername(), StandardCharsets.UTF_8),
-                "%url%", resetUrl
+            userOpt.get().getEmail(),
+            "email-passwordreset.html",
+            "%username%", URLEncoder.encode(userOpt.get().getUsername(), StandardCharsets.UTF_8),
+            "%url%", resetUrl
         );
-        return new ResetRequestResult(true, true);
+        return new ResetRequestResult(true, "Ссылка со сбросом пароля отправлена на ваш email.");
     }
 
     @Transactional
@@ -77,14 +76,14 @@ public class PasswordResetService {
         try {
             token = UUID.fromString(tokenStr);
         } catch (Exception e) {
-            throw new InvalidParametersException("Неправильный формат токена", 400);
+            return new ResetConfirmResult(false,"Неправильный формат токена");
         }
 
         LocalDateTime oneHourAgo = LocalDateTime.now().minusHours(TOKEN_EXPIRY_HOURS);
         var resetOpt = passwordResetRepository.findByUuidAndNotExpired(token, oneHourAgo);
 
         if (resetOpt.isEmpty()) {
-            throw new InvalidParametersException("Неправильный или просроченный токен", 401);
+            return new ResetConfirmResult(false,"Неправильный или просроченный токен");
         }
 
         var reset = resetOpt.get();
@@ -92,16 +91,16 @@ public class PasswordResetService {
 
         // Меняем пароль
         if (newPassword.isEmpty()) {
-            throw new InvalidParametersException("Пустой пароль", 36);
+            return new ResetConfirmResult(false,"Пустой пароль");
         }
         if (newPassword.length() < configPass.getMinPasswordLength() || newPassword.length() > configPass.getMaxPasswordLength()) {
-            throw new InvalidParametersException(String.format("Длина пароля должна быть от %d до %d символов",
-                    configPass.getMinPasswordLength(), configPass.getMaxPasswordLength()), 36);
+            return new ResetConfirmResult(false,String.format("Длина пароля должна быть от %d до %d символов",
+                    configPass.getMinPasswordLength(), configPass.getMaxPasswordLength()));
         } else {
             passwordCheckService.setPassword(user, newPassword);
             userService.save(user);
             passwordResetRepository.delete(reset);
-            return new ResetConfirmResult(true, true);
+            return new ResetConfirmResult(true, "Пароль успешно изменён! Теперь вы можете войти.");
         }
     }
 
@@ -111,6 +110,6 @@ public class PasswordResetService {
         LocalDateTime oneHourAgo = LocalDateTime.now().minusHours(TOKEN_EXPIRY_HOURS);
         passwordResetRepository.deleteExpired(oneHourAgo);
     }
-    public record ResetRequestResult(boolean done, boolean correct) {}
-    public record ResetConfirmResult(boolean done, boolean correct) {}
-}
+    public record ResetRequestResult(boolean done, String desc) {}
+    public record ResetConfirmResult(boolean done, String desc) {}
+  }

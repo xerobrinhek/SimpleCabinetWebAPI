@@ -1,6 +1,8 @@
 package com.gravitlauncher.simplecabinet.web.service.user;
 
 import com.gravitlauncher.simplecabinet.web.model.user.*;
+import com.gravitlauncher.simplecabinet.web.repository.user.PasswordResetRepository;
+import com.gravitlauncher.simplecabinet.web.service.PasswordResetService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

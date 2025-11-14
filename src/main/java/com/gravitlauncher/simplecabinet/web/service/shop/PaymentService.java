@@ -44,6 +44,10 @@ public class PaymentService {
         return paymentRepository.findUserPaymentBySystemAndSystemPaymentId(system, systemPaymentId);
     }
 
+    public Optional<Payment> findUserPaymentById(long id) {
+        return paymentRepository.findUserPaymentById(id);
+    }
+
     @Transactional
     public void deliveryPayment(Payment payment) throws BalanceException {
         System.out.printf("Delivery #%d sum %f", payment.getId(), payment.getSum());

@@ -25,7 +25,7 @@ public class WebApplication {
     public class TokenCleanupTask {
         @Autowired
         private PasswordResetService passwordResetService;
-
+        
         @Scheduled(fixedRate = 30 * 60 * 1000) // каждые 30 минут
         public void cleanup() {
             passwordResetService.cleanupExpiredTokens();
